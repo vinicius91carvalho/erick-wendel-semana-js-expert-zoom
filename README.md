@@ -5,11 +5,11 @@
 
 ## Home Page
 
-![home page](./prints/home.png)
+![home page](./public/prints/home.png)
 
 ## Room
 
-![room](./prints/room.png)
+![room](./public/prints/room.png)
 
 ### Créditos
 
