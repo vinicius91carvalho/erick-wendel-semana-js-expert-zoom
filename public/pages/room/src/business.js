@@ -25,6 +25,7 @@ class Business {
     async _init() {
 
         this.view.configureRecordButton(this.onRecordPressed.bind(this))
+        this.view.configureLeaveButton(this.onLeavePressed.bind(this))
 
         this.socket = this.socketBuilder
             .setOnUserConnected(this.onUserConnected())
@@ -54,10 +55,12 @@ class Business {
             recorderInstance.startRecording()
         }
 
+        const isCurrentId = userId === this.currentPeer.id
+
         this.view.renderVideo({
             userId,
             stream,
-            isCurrentId: false
+            isCurrentId
         })
     }
 
@@ -78,6 +81,7 @@ class Business {
             }
 
             this.view.setParticipants(this.peers.size)
+            this.stopRecording(userId)
             this.view.removeVideoElement(userId)
         }
     }
@@ -115,8 +119,10 @@ class Business {
     onPeerStreamReceived () {
         return (call, stream) => {
             const callerId = call.peer
-            console.log('caller id: ', callerId)
-            console.log('stream: ', stream)
+            if (this.peers.has(callerId)) {
+                console.log('calling twice, ignoring second call...', callerId)
+                return
+            }
             this.addVideoStream(callerId, stream)
             this.peers.set(callerId, { call })
             this.view.setParticipants(this.peers.size)
@@ -149,8 +155,7 @@ class Business {
     }
 
     async stopRecording(userId) {
-        const userRecordings = this.usersRecordings
-        for (const [key, value] of userRecordings) {
+        for (const [key, value] of this.usersRecordings) {
             const isContextUser = key.includes(userId)
             if (!isContextUser) continue
 
@@ -159,8 +164,20 @@ class Business {
             if (!isRecordingActive) continue
 
             await rec.stopRecording()
-
+            this.playRecordings(key)
         }
+    }
+
+    playRecordings(userId) {
+        const userRecording = this.usersRecordings.get(userId)
+        const videoURLs = userRecording.getAllVideoURLs()
+        videoURLs.map(url => {
+            this.view.renderVideo({ url, userId })
+        })
+    }
+
+    onLeavePressed() {
+        this.usersRecordings.forEach((value, key) => value.download())
     }
 
 }
