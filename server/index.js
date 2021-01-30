@@ -15,10 +15,12 @@ const io = socketIo(server, {
 })
 
 io.on('connection', socket => {
-    
+
     console.log('connection', socket.id)
     
     socket.on('join-room', (roomId, userId) => {
+
+        console.log('user connected', roomId, userId)
         // Adiciona os usuários na mesma sala
         socket.join(roomId)
         socket.to(roomId).broadcast.emit('user-connected', userId)
